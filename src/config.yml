@@ -1,0 +1,11 @@
+path:
+    raw_enc   : '../data/raw_enc.txt'
+    raw_dec   : '../data/raw_dec.txt'
+    index_dict: '../data/index_dict.pickle'
+    batched   : '../data/batched.pickle'
+
+param:
+    n_epoch    : 100
+    size_batch :   3
+    size_embed : 300
+    size_hidden: 150
