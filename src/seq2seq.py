@@ -21,24 +21,26 @@ class Encoder(Chain):
         self.size_hidden = size_hidden
 
         with self.init_scope():
-            self.embed   = L.EmbedID(size_vocab, size_embed, ignore_label=-1)
-            self.upward  = L.Linear(size_embed , 4 * size_hidden)
-            self.lateral = L.Linear(size_hidden, 4 * size_hidden)
+            self.embed = L.EmbedID(size_vocab, size_embed, ignore_label=-1)
+            #self.upward  = L.Linear(size_embed , 4 * size_hidden)
+            #self.lateral = L.Linear(size_hidden, 4 * size_hidden)
+            self.lstm  = L.LSTM(size_embed, size_hidden)
 
-    def __call__(self, x, h):
+    def __call__(self, x):
         """
         : arg x (size_batch)              : 単語ID
         : arg h (size_batch, size_hidden) : 前回の隠れ層
         : ret h (size_batch, size_hidden) : 今回の隠れ層
         """
         e = F.tanh(self.embed(x))
-        self.c, h = F.lstm(self.c, self.upward(e) + self.lateral(h))
+        #self.c, h = F.lstm(self.c, self.upward(e) + self.lateral(h))
+        h = self.lstm(e)
 
         return h
 
     def reset(self):
-        self.c = np.zeros((self.size_batch, self.size_hidden), dtype='float32')
-
+        #self.c = np.zeros((self.size_batch, self.size_hidden), dtype='float32')
+        self.lstm.reset_state()
 
 
 class Decoder(Chain):
@@ -55,15 +57,14 @@ class Decoder(Chain):
         self.size_hidden = size_hidden
 
         with self.init_scope():
-            '''
-            '''
-            self.embed   = L.EmbedID(size_vocab, size_embed, ignore_label=-1)
-            self.upward  = L.Linear(size_embed , size_hidden * 4) #LSTM内部の再現用
-            self.lateral = L.Linear(size_hidden, size_hidden * 4) #LSTM内部の再現用
-            self.he      = L.Linear(size_hidden, size_embed)
-            self.ev      = L.Linear(size_embed , size_vocab)
+            self.embed = L.EmbedID(size_vocab, size_embed, ignore_label=-1)
+            #self.upward  = L.Linear(size_embed , size_hidden * 4) #LSTM内部の再現用
+            #self.lateral = L.Linear(size_hidden, size_hidden * 4) #LSTM内部の再現用
+            self.lstm  = L.LSTM(size_embed, size_hidden)
+            self.he    = L.Linear(size_hidden, size_embed)
+            self.ev    = L.Linear(size_embed , size_vocab)
 
-    def __call__(self, x, h):
+    def __call__(self, x):
         """
         : arg x (size_batch)              : 単語ID
         : arg h (size_batch, size_hidden) : 前回の隠れ層
@@ -71,13 +72,15 @@ class Decoder(Chain):
         : ret h (size_batch, size_hidden) : 今回の隠れ層
         """
         e = F.tanh(self.embed(x))
-        self.c, h = F.lstm(self.c, self.upward(e) + self.lateral(h))
+        #self.c, h = F.lstm(self.c, self.upward(e) + self.lateral(h))
+        h = self.lstm(e)
         t = self.ev(F.tanh(self.he(h)))
 
-        return t, h
+        return t
 
     def reset(self):
-        self.c = np.zeros((self.size_batch, self.size_hidden), dtype='float32')
+        #self.c = np.zeros((self.size_batch, self.size_hidden), dtype='float32')
+        self.lstm.reset_state()
 
 
 
@@ -104,18 +107,21 @@ class Seq2Seq(Chain):
         : arg dec_b (size_batch) :
         : ret loss               : 計算した損失の合計
         '''
-        # model内に保存されている勾配をリセット
+        # model内で使用するLSTMの内部状態をリセット
         model.reset()
 
         loss = Variable(np.zeros((), dtype='float32'))
 
         # encode
         for w in enc_b:
-            self.h = model.encoder(w, self.h)
+            h = model.encoder(w)
+
+        # encoderの隠れ層の値をdecorderに受け渡し
+        model.decoder.lstm.h = h
 
         # decord
         for w, w_ in zip(dec_b, dec_b[1:]):
-            t, self.h = model.decoder(w, self.h)
+            t = model.decoder(w)
             loss += F.softmax_cross_entropy(t, w_) #ラベル w_ はIDのままでOK
 
         model.cleargrads()
@@ -129,8 +135,6 @@ class Seq2Seq(Chain):
         """
         self.encoder.reset()
         self.decoder.reset()
-        #self.cleargrads()
-        self.h = np.zeros((self.size_batch, self.size_hidden), dtype='float32')
 
 
 
