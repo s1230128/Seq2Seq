@@ -2,10 +2,10 @@ path:
     raw_enc : '../data/raw_enc.txt'
     raw_dec : '../data/raw_dec.txt'
 
-    out_dir : '../result/lstm_100'
+    out_dir : '../result/lstm_10'
 
 param:
-    n_epoch     : 100
+    n_epoch     :  10
     size_batch  :   3
     size_embed  : 300
     size_hidden : 150
