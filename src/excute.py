@@ -27,6 +27,8 @@ if __name__ == '__main__':
     ''' データの準備 '''
     with open(config['path']['raw_enc']) as f: enc_texts = f.readlines()
     with open(config['path']['raw_dec']) as f: dec_texts = f.readlines()
+
+    print(len(enc_texts))
     # 文章を単語のリストに変換
     enc_texts = [nltk.word_tokenize(t) for t in enc_texts]
     dec_texts = [nltk.word_tokenize(t) for t in dec_texts]
@@ -40,6 +42,7 @@ if __name__ == '__main__':
     dec_texts = [[0]+[index_dict[w] for w in t]+[1] for t in dec_texts]
     # 単語の種類数
     n_vocab = len(index_dict)
+    print(n_vocab)
 
 
     ''' 学習 '''
@@ -72,6 +75,7 @@ if __name__ == '__main__':
 
         print('{:3} | {}'.format(epoch+1, sum_loss))
         loss_list.append(sum_loss)
+
 
     ''' 結果の保存 '''
     dir = config['path']['out_dir']

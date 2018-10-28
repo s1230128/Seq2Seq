@@ -56,8 +56,9 @@ class Decoder(Chain):
         with self.init_scope():
             self.embed = L.EmbedID(size_vocab, size_embed, ignore_label=-1)
             self.lstm  = L.LSTM(size_embed, size_hidden)
-            self.he    = L.Linear(size_hidden, size_embed) #
-            self.ev    = L.Linear(size_embed , size_vocab) #
+            #self.he    = L.Linear(size_hidden, size_embed) #
+            #self.ev    = L.Linear(size_embed , size_vocab) #
+            self.hv = L.Linear(size_hidden, size_vocab)
 
     def __call__(self, x):
         """
@@ -68,7 +69,8 @@ class Decoder(Chain):
         """
         e = F.tanh(self.embed(x))
         h = self.lstm(e)
-        t = self.ev(F.tanh(self.he(h))) #出力は隠れ層を(size_batch, size_vocab)のonehotに
+        #t = self.ev(F.tanh(self.he(h))) #出力は隠れ層を(size_batch, size_vocab)のonehotに
+        t = self.hv(h)
         return t
 
     def reset(self):

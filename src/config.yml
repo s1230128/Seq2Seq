@@ -1,11 +1,11 @@
 path:
-    raw_enc : '../data/raw_enc.txt'
-    raw_dec : '../data/raw_dec.txt'
+    raw_enc : '../data/tokenized/train.en'
+    raw_dec : '../data/tokenized/train.en'
 
     out_dir : '../result/lstm_100'
 
 param:
     n_epoch     : 100
-    size_batch  :   3
+    size_batch  : 100
     size_embed  : 300
     size_hidden : 150
